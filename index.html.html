@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Буровой калькулятор</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            margin: 0;
+            background: #121212;
+            font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+            color: #e0e0e0;
+            padding-bottom: 20px;
+        }
+        .app-bar {
+            background: #ff9800;
+            color: #000;
+            padding: 16px 20px;
+            font-size: 22px;
+            font-weight: bold;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .menu-card {
+            background: #1e1e1e;
+            border-radius: 20px;
+            padding: 24px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid #333;
+        }
+        .menu-card:active { background: #2a2a2a; transform: scale(0.97); }
+        .menu-icon { font-size: 48px; display: block; margin-bottom: 12px; }
+        .menu-title { font-size: 16px; font-weight: bold; }
+        
+        .screen {
+            display: none;
+            animation: fade 0.2s;
+        }
+        .screen.active { display: block; }
+        
+        @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+        
+        .back-btn {
+            background: #ff9800;
+            border: none;
+            color: #000;
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-weight: bold;
+            margin-bottom: 16px;
+            cursor: pointer;
+        }
+        .input-group {
+            margin-bottom: 16px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            color: #ff9800;
+        }
+        input {
+            width: 100%;
+            padding: 14px;
+            background: #2c2c2c;
+            border: 1px solid #444;
+            border-radius: 16px;
+            color: white;
+            font-size: 16px;
+        }
+        button.calc-btn {
+            width: 100%;
+            background: #ff9800;
+            color: #000;
+            padding: 14px;
+            border: none;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 18px;
+            margin: 16px 0;
+            cursor: pointer;
+        }
+        .result-card {
+            background: #1e1e1e;
+            border-radius: 16px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            border-left: 4px solid #ff9800;
+        }
+        .result-label { font-size: 14px; opacity: 0.8; }
+        .result-value { font-size: 20px; font-weight: bold; word-break: break-word; }
+        h3 { color: #ff9800; margin-top: 20px; }
+        hr { border-color: #333; margin: 16px 0; }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <div class="app-bar">🛢️ Буровой калькулятор</div>
+    <div class="container">
+        <!-- ГЛАВНОЕ МЕНЮ -->
+        <div id="menuScreen" class="screen active">
+            <div class="menu-grid">
+                <div class="menu-card" onclick="showScreen('volumes')">
+                    <span class="menu-icon">📐</span>
+                    <div class="menu-title">Объёмы скважины</div>
+                </div>
+                <div class="menu-card" onclick="showScreen('hydraulics')">
+                    <span class="menu-icon">💧</span>
+                    <div class="menu-title">Гидравлика / Время</div>
+                </div>
+                <div class="menu-card" onclick="showScreen('weighting')">
+                    <span class="menu-icon">⚖️</span>
+                    <div class="menu-title">Утяжеление (Барит, соль...)</div>
+                </div>
+                <div class="menu-card" onclick="showScreen('chemistry')">
+                    <span class="menu-icon">🧪</span>
+                    <div class="menu-title">Химия (вязкость, фильтр)</div>
+                </div>
+                <div class="menu-card" onclick="showScreen('tank')">
+                    <span class="menu-icon">📏</span>
+                    <div class="menu-title">Объём по линейке</div>
+                </div>
+                <div class="menu-card" onclick="showScreen('mixing')">
+                    <span class="menu-icon">🔄</span>
+                    <div class="menu-title">Смешивание растворов</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ЭКРАН ОБЪЁМЫ -->
+        <div id="volumesScreen" class="screen">
+            <button class="back-btn" onclick="showScreen('menu')">← Назад</button>
+            <h3>📐 Объёмы скважины</h3>
+            <div class="input-group"><label>Диаметр долота (мм)</label><input type="number" id="doloto" value="215.9"></div>
+            <div class="input-group"><label>Глубина (м)</label><input type="number" id="depth" value="2500"></div>
+            <div class="input-group"><label>Диаметр КНБК (мм)</label><input type="number" id="knbk" value="203"></div>
+            <div class="input-group"><label>Коэф. кавернозности</label><input type="number" id="kav" value="1.15" step="0.01"></div>
+            <div class="input-group"><label>Интервал открытого ствола (м)</label><input type="number" id="interval" value="19"></div>
+            <button class="calc-btn" onclick="calcVolumes()">РАССЧИТАТЬ</button>
+            <div id="volumesResults"></div>
+        </div>
+
+        <!-- ГИДРАВЛИКА -->
+        <div id="hydraulicsScreen" class="screen">
+            <button class="back-btn" onclick="showScreen('menu')">← Назад</button>
+            <h3>💧 Циркуляция</h3>
+            <div class="input-group"><label>Подача насоса (л/сек)</label><input type="number" id="q" value="30"></div>
+            <div class="input-group"><label>Объём внутри труб (м³)</label><input type="number" id="vnutr" value="50"></div>
+            <div class="input-group"><label>Объём затрубья (м³)</label><input type="number" id="zp" value="80"></div>
+            <button class="calc-btn" onclick="calcHydraulics()">РАССЧИТАТЬ</button>
+            <div id="hydraulicsResults"></div>
+        </div>
+
+        <!-- УТЯЖЕЛЕНИЕ -->
+        <div id="weightingScreen" class="screen">
+            <button class="back-btn" onclick="showScreen('menu')">← Назад</button>
+            <h3>⚖️ Утяжеление раствора</h3>
+            <div class="input-group"><label>Объём раствора (м³)</label><input type="number" id="volR" value="100"></div>
+            <div class="input-group"><label>Текущая плотность (кг/м³)</label><input type="number" id="rho0" value="1100"></div>
+            <div class="input-group"><label>Нужная плотность (кг/м³)</label><input type="number" id="rhoTarget" value="1400"></div>
+            <button class="calc-btn" onclick="calcWeighting()">РАССЧИТАТЬ</button>
+            <div id="weightingResults"></div>
+        </div>
+
+        <!-- ХИМИЯ -->
+        <div id="chemistryScreen" class="screen">
+            <button class="back-btn" onclick="showScreen('menu')">← Назад</button>
+            <h3>🧪 Регулировка свойств</h3>
+            <div class="input-group"><label>Объём раствора (м³)</label><input type="number" id="chemVol" value="100"></div>
+            <hr>
+            <div class="input-group"><label>Желаемая водоотдача (см³/30мин)</label><input type="number" id="waterLoss" value="6"></div>
+            <button class="calc-btn" onclick="calcStarch()">🧪 Крахмал (водоотдача)</button>
+            <div id="starchResult"></div>
+            <hr>
+            <div class="input-group"><label>Желаемая вязкость (сек по ВБР-2)</label><input type="number" id="viscTarget" value="44"></div>
+            <button class="calc-btn" onclick="calcXanthan()">🌿 Ксантан (вязкость)</button>
+            <div id="xanthanResult"></div>
+            <hr>
+            <div class="input-group"><label>Бентонит (кг/м³)</label><input type="number" id="bentConc" value="30"></div>
+            <button class="calc-btn" onclick="calcBentonite()">🪨 Бентонит → плотность</button>
+            <div id="bentoniteResult"></div>
+        </div>
+
+        <!-- ОБЪЁМ ПО ЛИНЕЙКЕ -->
+        <div id="tankScreen" class="screen">
+            <button class="back-btn" onclick="showScreen('menu')">← Назад</button>
+            <h3>📏 Объём в ёмкости по линейке</h3>
+            <div class="input-group"><label>Длина (м)</label><input type="number" id="tankL" value="5"></div>
+            <div class="input-group"><label>Ширина (м)</label><input type="number" id="tankW" value="2.5"></div>
+            <div class="input-group"><label>Высота уровня (м)</label><input type="number" id="tankH" value="1.2"></div>
+            <button class="calc-btn" onclick="calcTankVolume()">РАССЧИТАТЬ ОБЪЁМ</button>
+            <div id="tankResult"></div>
+        </div>
+
+        <!-- СМЕШИВАНИЕ РАСТВОРОВ -->
+        <div id="mixingScreen" class="screen">
+            <button class="back-btn" onclick="showScreen('menu')">← Назад</button>
+            <h3>🔄 Смешивание растворов</h3>
+            <div class="input-group"><label>Объём 1 (м³)</label><input type="number" id="v1" value="50"></div>
+            <div class="input-group"><label>Плотность 1 (кг/м³)</label><input type="number" id="rho1" value="1015"></div>
+            <div class="input-group"><label>Объём 2 (м³)</label><input type="number" id="v2" value="50"></div>
+            <div class="input-group"><label>Плотность 2 (кг/м³)</label><input type="number" id="rho2" value="1020"></div>
+            <button class="calc-btn" onclick="calcMixing()">СМЕШАТЬ</button>
+            <div id="mixingResult"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showScreen(name) {
+        document.getElementById('menuScreen').classList.remove('active');
+        document.getElementById('volumesScreen').classList.remove('active');
+        document.getElementById('hydraulicsScreen').classList.remove('active');
+        document.getElementById('weightingScreen').classList.remove('active');
+        document.getElementById('chemistryScreen').classList.remove('active');
+        document.getElementById('tankScreen').classList.remove('active');
+        document.getElementById('mixingScreen').classList.remove('active');
+        if(name === 'menu') document.getElementById('menuScreen').classList.add('active');
+        if(name === 'volumes') document.getElementById('volumesScreen').classList.add('active');
+        if(name === 'hydraulics') document.getElementById('hydraulicsScreen').classList.add('active');
+        if(name === 'weighting') document.getElementById('weightingScreen').classList.add('active');
+        if(name === 'chemistry') document.getElementById('chemistryScreen').classList.add('active');
+        if(name === 'tank') document.getElementById('tankScreen').classList.add('active');
+        if(name === 'mixing') document.getElementById('mixingScreen').classList.add('active');
+    }
+
+    function calcVolumes() {
+        let D = parseFloat(document.getElementById('doloto').value) / 1000;
+        let H = parseFloat(document.getElementById('depth').value);
+        let Dknbk = parseFloat(document.getElementById('knbk').value) / 1000;
+        let kav = parseFloat(document.getElementById('kav').value);
+        let interval = parseFloat(document.getElementById('interval').value);
+        
+        let S_skv = Math.PI * Math.pow(D * kav, 2) / 4;
+        let V_skv = S_skv * H;
+        let V_zp = (S_skv - (Math.PI * Math.pow(Dknbk,2)/4)) * H;
+        let V_interval = S_skv * interval;
+        let D_vnutr = Dknbk - 0.03;
+        let S_metal = (Math.PI * Math.pow(Dknbk,2)/4) - (Math.PI * Math.pow(D_vnutr,2)/4);
+        let V_metal = S_metal * H;
+        let V_viburen = V_skv * 0.6 * kav;
+        
+        document.getElementById('volumesResults').innerHTML = `
+            <div class="result-card"><div class="result-label">Объём скважины без инструмента</div><div class="result-value">${V_skv.toFixed(1)} м³</div></div>
+            <div class="result-card"><div class="result-label">Затрубное пространство</div><div class="result-value">${V_zp.toFixed(1)} м³</div></div>
+            <div class="result-card"><div class="result-label">Объём металла (КНБК)</div><div class="result-value">${V_metal.toFixed(2)} м³</div></div>
+            <div class="result-card"><div class="result-label">Открытый ствол за ${interval} м</div><div class="result-value">${V_interval.toFixed(2)} м³</div></div>
+            <div class="result-card"><div class="result-label">Выбуренная порода (приблиз.)</div><div class="result-value">${V_viburen.toFixed(1)} м³</div></div>
+        `;
+    }
+    
+    function calcHydraulics() {
+        let q = parseFloat(document.getElementById('q').value);
+        let vnutr = parseFloat(document.getElementById('vnutr').value);
+        let zp = parseFloat(document.getElementById('zp').value);
+        if(q<=0) return;
+        let cycleSec = (vnutr+zp)/q;
+        let toBottomSec = vnutr/q;
+        let toSurfaceSec = zp/q;
+        document.getElementById('hydraulicsResults').innerHTML = `
+            <div class="result-card"><div class="result-label">Время полного цикла</div><div class="result-value">${(cycleSec/60).toFixed(1)} мин (${cycleSec.toFixed(0)} сек)</div></div>
+            <div class="result-card"><div class="result-label">Время до забоя (пачка)</div><div class="result-value">${(toBottomSec/60).toFixed(1)} мин</div></div>
+            <div class="result-card"><div class="result-label">Время выхода пачки</div><div class="result-value">${(toSurfaceSec/60).toFixed(1)} мин</div></div>
+        `;
+    }
+    
+    function calcWeighting() {
+        let V = parseFloat(document.getElementById('volR').value);
+        let rho0 = parseFloat(document.getElementById('rho0').value);
+        let rhoT = parseFloat(document.getElementById('rhoTarget').value);
+        if(V<=0 || rho0<=0 || rhoT<=rho0) { document.getElementById('weightingResults').innerHTML = '<div class="result-card">Проверьте данные (ρнужн > ρтек)</div>'; return; }
+        let utils = [
+            {name:'Барит (4.2 г/см³)', rho:4200},
+            {name:'NaCl (2.17)', rho:2170},
+            {name:'KCl (1.99)', rho:1990},
+            {name:'Мел (2.7)', rho:2700}
+        ];
+        let html = '';
+        for(let u of utils) {
+            if(rhoT >= u.rho) html += `<div class="result-card"><div class="result-label">${u.name}</div><div class="result-value">Невозможно (плотность выше утяжелителя)</div></div>`;
+            else {
+                let M = (u.rho * V * (rhoT - rho0)) / (u.rho - rhoT);
+                html += `<div class="result-card"><div class="result-label">${u.name}</div><div class="result-value">${(M/1000).toFixed(1)} тонн (${M.toFixed(0)} кг)</div></div>`;
+            }
+        }
+        document.getElementById('weightingResults').innerHTML = html;
+    }
+    
+    function calcStarch() {
+        let vol = parseFloat(document.getElementById('chemVol').value);
+        let wl = parseFloat(document.getElementById('waterLoss').value);
+        if(isNaN(vol) || vol<=0) return;
+        // Эмпирика: чтобы получить водоотдачу ~6, нужно ~2% крахмала
+        let starchKg = 0;
+        if(wl <= 12) starchKg = vol * ( (12 - wl) * 0.4 + 1.5 );
+        else starchKg = vol * 1.2;
+        document.getElementById('starchResult').innerHTML = `<div class="result-card"><div class="result-label">Крахмал для водоотдачи ${wl} см³/30мин</div><div class="result-value">~ ${starchKg.toFixed(0)} кг (${(starchKg/vol).toFixed(1)} кг/м³)</div></div>`;
+    }
+    
+    function calcXanthan() {
+        let vol = parseFloat(document.getElementById('chemVol').value);
+        let visc = parseFloat(document.getElementById('viscTarget').value);
+        if(isNaN(vol) || vol<=0) return;
+        // Вязкость ~30 + 150*C, C в %
+        let C = (visc - 30) / 150;
+        if(C<0) C=0.2;
+        let kg = vol * C * 10;
+        document.getElementById('xanthanResult').innerHTML = `<div class="result-card"><div class="result-label">Ксантан для вязкости ${visc} сек</div><div class="result-value">~ ${kg.toFixed(0)} кг (${(kg/vol).toFixed(1)} кг/м³)</div></div>`;
+    }
+    
+    function calcBentonite() {
+        let conc = parseFloat(document.getElementById('bentConc').value);
+        if(isNaN(conc)) return;
+        let deltaRho = conc * 0.00035; // примерно +0.35 г/см³ на 100 кг/м³
+        let newRho = 1000 + deltaRho*1000;
+        document.getElementById('bentoniteResult').innerHTML = `<div class="result-card"><div class="result-label">Бентонит ${conc} кг/м³</div><div class="result-value">Увеличит плотность до ≈ ${newRho.toFixed(0)} кг/м³ (${(newRho/1000).toFixed(2)} г/см³)</div></div>`;
+    }
+    
+    function calcTankVolume() {
+        let L = parseFloat(document.getElementById('tankL').value);
+        let W = parseFloat(document.getElementById('tankW').value);
+        let H = parseFloat(document.getElementById('tankH').value);
+        let V = L * W * H;
+        document.getElementById('tankResult').innerHTML = `<div class="result-card"><div class="result-label">Объём в ёмкости</div><div class="result-value">${V.toFixed(2)} м³ (${(V*1000).toFixed(0)} литров)</div></div>`;
+    }
+    
+    function calcMixing() {
+        let v1 = parseFloat(document.getElementById('v1').value);
+        let r1 = parseFloat(document.getElementById('rho1').value);
+        let v2 = parseFloat(document.getElementById('v2').value);
+        let r2 = parseFloat(document.getElementById('rho2').value);
+        let Vsum = v1 + v2;
+        let rhoMix = (v1*r1 + v2*r2) / Vsum;
+        document.getElementById('mixingResult').innerHTML = `<div class="result-card"><div class="result-label">Итоговая плотность</div><div class="result-value">${rhoMix.toFixed(0)} кг/м³ (${(rhoMix/1000).toFixed(3)} г/см³)</div><div class="result-label">Общий объём</div><div class="result-value">${Vsum.toFixed(1)} м³</div></div>`;
+    }
+</script>
+</body>
+</html>
